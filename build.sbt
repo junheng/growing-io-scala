@@ -1,4 +1,4 @@
-lazy val `growing-io-scala` = (project in file("."))
+lazy val `growing-io-scala` = Project(id = "growing-io-scala", base = file("."))
   .settings(
     name := "growing-io-scala",
     version := "0.1-SNAPSHOT",
