@@ -11,8 +11,6 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-kernel" % "2.3.15" withSources(),
       "com.typesafe.akka" %% "akka-slf4j" % "2.3.15" withSources(),
       "com.typesafe.akka" %% "akka-contrib" % "2.3.15" withSources(),
-      //for spark
-       "org.apache.spark" %% "spark-core" % "1.6.1" withSources(),
       //for Http Client
       "net.databinder.dispatch" % "dispatch-core_2.11" % "0.11.3" withSources(),
       //for MD5
