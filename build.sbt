@@ -1,4 +1,4 @@
-lazy val root = (project in file("."))
+lazy val `growing-io-scala` = (project in file("."))
   .settings(
     name := "growing-io-scala",
     version := "0.1-SNAPSHOT",
