@@ -11,6 +11,9 @@ lazy val `growing-io-scala` = Project("growing-io-scala", file("."))
       "com.typesafe.akka" %% "akka-kernel" % "2.3.15" withSources(),
       "com.typesafe.akka" %% "akka-slf4j" % "2.3.15" withSources(),
       "com.typesafe.akka" %% "akka-contrib" % "2.3.15" withSources(),
+      //for Json
+      "org.json4s" %% "json4s-jackson" % "3.2.11" withSources(),
+      "org.json4s" %% "json4s-ext" % "3.2.11" withSources(),
       //for Http Client
       "net.databinder.dispatch" % "dispatch-core_2.11" % "0.11.3" withSources(),
       //for MD5
