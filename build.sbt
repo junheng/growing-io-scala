@@ -15,7 +15,7 @@ lazy val `growing-io-scala` = Project("growing-io-scala", file("."))
       "org.json4s" %% "json4s-jackson" % "3.2.11" withSources(),
       "org.json4s" %% "json4s-ext" % "3.2.11" withSources(),
       //for Http Client
-      "net.databinder.dispatch" % "dispatch-core_2.11" % "0.11.3" withSources(),
+      "net.databinder.dispatch" %% "dispatch-core" % "0.11.3" withSources(),
       //for MD5
       "commons-codec" % "commons-codec" % "1.4",
       //for Logger

@@ -11,23 +11,26 @@ abstract class HttpAccessActor(client: String, token: String) extends Actor with
 
   protected implicit val format = DefaultFormats
 
-  def get(path: String)(success: String => Unit, failure: (Int, String) => Unit = (code, content) => Unit) = {
+  def get(path: String)(callback: PartialFunction[Any, Unit]) = {
     val req = url(ENDPOINT + path)
       .addHeader(H_CLIENT_ID, client)
       .addHeader(H_TOKEN, token)
       .GET
 
+    process(req, callback)
+  }
+
+  def process(req: Req, callback: PartialFunction[Any, Unit]): Future[Unit] = {
     Http(
       req > { resp =>
         log.debug(s"${req.toRequest.toString} returned [${resp.getStatusText}]:\n${resp.getResponseBody}")
         resp.getStatusCode match {
-          case 200 => success(resp.getResponseBody)
-          case error => failure(error, resp.getResponseBody)
+          case 200 => callback(resp.getResponseBody)
+          case error => callback(error, resp.getResponseBody)
         }
       }
     )
   }
-
 }
 
 object HttpAccessActor {
@@ -37,4 +40,5 @@ object HttpAccessActor {
   final val P_PROJECT_ID = "ai"
   final val P_PROJECT_UID = "project"
   final val P_ENCRYPTED_TOKEN = "auth"
+  final val P_TM = "tm"
 }

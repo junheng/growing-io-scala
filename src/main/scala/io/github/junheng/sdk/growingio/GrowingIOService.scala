@@ -19,7 +19,8 @@ class GrowingIOService extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case GetGrowingIOProject(client, secret, id, uid) =>
-      val encryptedToken = encrypt(secret, id, uid)
+      val timeMillis: Long = System.currentTimeMillis()
+      val encryptedToken = encrypt(secret, id, uid, timeMillis)
       val receipt = sender()
       val path: String = "/auth/token"
       val req = url(ENDPOINT + path)
@@ -27,6 +28,7 @@ class GrowingIOService extends Actor with ActorLogging {
         .addQueryParameter(P_PROJECT_ID, id)
         .addQueryParameter(P_PROJECT_UID, uid)
         .addQueryParameter(P_ENCRYPTED_TOKEN, encryptedToken)
+        .addQueryParameter(P_TM, timeMillis.toString)
         .POST
 
       Http(req > { resp =>
@@ -42,8 +44,8 @@ class GrowingIOService extends Actor with ActorLogging {
       })
   }
 
-  def encrypt(secret: String, id: String, uid: String) = {
-    val messages = s"POST\n/auth/token\nproject=$uid&ai=$id"
+  def encrypt(secret: String, id: String, uid: String, tm: Long) = {
+    val messages = s"POST\n/auth/token\nproject=$uid&ai=$id&tm=$tm"
     val hmac = Mac.getInstance("HmacSHA256")
     hmac.init(new SecretKeySpec(secret.getBytes("UTF-8"), "HmacSHA256"))
     val signature = hmac.doFinal(messages.getBytes("UTF-8"))
