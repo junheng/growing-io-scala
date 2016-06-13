@@ -16,7 +16,6 @@ class GetInsightsAction(client: String, id: String, token: String, time: String,
   override def preStart() = {
     downloadFolder match {
       case folder if folder.exists() && folder.list().length >= 2 && folder.list().contains("finish_report") =>
-        reportTo ! InsightsDownloaded(folder.getAbsolutePath, 0, 0)
         context.stop(self)
       case folder if folder.exists() => folder.listFiles().foreach(_.delete())
       case folder => folder.mkdir()
