@@ -14,7 +14,7 @@ class GrowingIOProject(client: String, id: String, token: String) extends HttpAc
     case DownloadInsights(time) =>
       val actionPath = s"get_insight_action_$time"
       context.child(actionPath) match {
-        case Some(exists) => log.info(s"$actionPath is running")
+        case Some(exists) => //still downloading, do nothing
         case None => context.actorOf(GetInsightsAction.props(client, id, token, time, sender()),actionPath)
       }
   }

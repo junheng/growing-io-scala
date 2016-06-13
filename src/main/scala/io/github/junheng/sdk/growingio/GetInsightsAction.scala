@@ -1,6 +1,6 @@
 package io.github.junheng.sdk.growingio
 
-import java.io.File
+import java.io.{File, _}
 import java.net.URL
 
 import akka.actor.{ActorRef, Props}
@@ -15,8 +15,8 @@ class GetInsightsAction(client: String, id: String, token: String, time: String,
 
   override def preStart() = {
     downloadFolder match {
-      case folder if folder.exists() && folder.list().length >= 2 =>
-        reportTo ! InsightsDownloaded(folder.list(), 0, 0)
+      case folder if folder.exists() && folder.list().length >= 2 && folder.list().contains("finish_report") =>
+        reportTo ! InsightsDownloaded(folder.getAbsolutePath, 0, 0)
         context.stop(self)
       case folder if folder.exists() => folder.listFiles().foreach(_.delete())
       case folder => folder.mkdir()
@@ -29,14 +29,14 @@ class GetInsightsAction(client: String, id: String, token: String, time: String,
 
   override def receive: Receive = {
     case Insights(links) =>
+      val start = System.currentTimeMillis()
+      var totalFailed = 0
       try {
-        val start = System.currentTimeMillis()
-        var totalFailed = 0
-        val downloaded = links.map { link =>
+        links.map { link =>
           val fileName = if (link.contains("action")) "action.gz" else "pv.gz"
           log.info(s"downloading $fileName... ")
           val path = s"""${downloadFolder.getCanonicalPath}/$fileName"""
-          def tryDownload = new URL(link).#>(new File(path)).!(ProcessLogger(x => log.debug("DOWNLOAD =>" + x)))
+          def tryDownload = new URL(link).#>(new File(path)).!
           var failed = 0
           while (failed < 5 && tryDownload != 0) failed += 1
           if (failed < 5) {
@@ -47,13 +47,22 @@ class GetInsightsAction(client: String, id: String, token: String, time: String,
           totalFailed += failed
           path
         }
-        val cost = System.currentTimeMillis() - start
-        reportTo ! InsightsDownloaded(downloaded, cost, totalFailed)
+        writeResult("/finish_report", links, totalFailed, cost(start))
+        reportTo ! InsightsDownloaded(downloadFolder.getAbsolutePath, cost(start), totalFailed)
       } catch {
         case e: DownloadFailed =>
+          writeResult("/failed_report", links, totalFailed, cost(start))
           reportTo ! e
           context.stop(self)
       }
+  }
+
+  def cost(start: Long): Long = System.currentTimeMillis() - start
+
+  def writeResult(reportPath: String, links: Seq[String], totalFailed: Int, cost: Long): Unit = {
+    val pw = new PrintWriter(new File(downloadFolder + reportPath))
+    pw.write(s"files[${links.size}], cost[$cost], totalFailed[$totalFailed]")
+    pw.close()
   }
 }
 
@@ -68,6 +77,6 @@ object GetInsightsAction {
 
   case class Insights(downlinks: Seq[String])
 
-  case class InsightsDownloaded(files: Seq[String], cost: Long, failed: Int)
+  case class InsightsDownloaded(folder: String, cost: Long, failed: Int)
 
 }

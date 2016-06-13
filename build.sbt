@@ -1,16 +1,18 @@
+val versionOfAkka = "2.4.7"
+
 lazy val `growing-io-scala` = Project("growing-io-scala", file("."))
   .settings(
     name := "growing-io-scala",
     version := "0.1-SNAPSHOT",
-    scalaVersion := "2.10.6",
+    scalaVersion := "2.11.7",
     ivyScala := ivyScala.value map {
       _.copy(overrideScalaVersion = true)
     }, libraryDependencies ++= Seq(
       //for AKKA
-      "com.typesafe.akka" %% "akka-actor" % "2.3.15" withSources(),
-      "com.typesafe.akka" %% "akka-kernel" % "2.3.15" withSources(),
-      "com.typesafe.akka" %% "akka-slf4j" % "2.3.15" withSources(),
-      "com.typesafe.akka" %% "akka-contrib" % "2.3.15" withSources(),
+      "com.typesafe.akka" %% "akka-actor" % versionOfAkka withSources(),
+      "com.typesafe.akka" %% "akka-kernel" % versionOfAkka withSources(),
+      "com.typesafe.akka" %% "akka-slf4j" % versionOfAkka withSources(),
+      "com.typesafe.akka" %% "akka-contrib" % versionOfAkka withSources(),
       //for Json
       "org.json4s" %% "json4s-jackson" % "3.2.11" withSources(),
       "org.json4s" %% "json4s-ext" % "3.2.11" withSources(),
