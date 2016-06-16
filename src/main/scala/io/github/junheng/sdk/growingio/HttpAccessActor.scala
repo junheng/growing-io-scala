@@ -34,7 +34,7 @@ abstract class HttpAccessActor(client: String, token: String) extends Actor with
 }
 
 object HttpAccessActor {
-  final val ENDPOINT = "https://www.growingio.com"
+  final val ENDPOINT = "https://gta.growingio.com"
   final val H_CLIENT_ID = "X-Client-Id"
   final val H_TOKEN = "Authorization"
   final val P_PROJECT_ID = "ai"
