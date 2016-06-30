@@ -17,43 +17,63 @@ class GetInsightsAction(client: String, id: String, token: String, time: String,
     downloadFolder match {
       case folder if folder.exists() && folder.list().length >= 2 && folder.list().contains("finish_report") =>
         context.stop(self)
-      case folder if folder.exists() => folder.listFiles().foreach(_.delete())
-      case folder => folder.mkdir()
+      case folder if folder.exists() =>
+        folder.listFiles().foreach(_.delete())
+        requestForLinks()
+      case folder =>
+        folder.mkdir()
+        requestForLinks()
     }
+  }
+
+
+  def requestForLinks(): Unit = {
+    log.info(s"action started for download project $id insights at $time")
     get(s"/insights/$id/$time.json?expire=120") {
       case resp: String => self ! JsonMethods.parse(resp).extract[Insights]
     }
   }
-
 
   override def receive: Receive = {
     case Insights(links) =>
       val start = System.currentTimeMillis()
       var totalFailed = 0
       try {
-        links.map { link =>
-          val fileName = if (link.contains("action")) "action.gz" else "pv.gz"
-          log.info(s"downloading $fileName... ")
-          val path = s"""${downloadFolder.getCanonicalPath}/$fileName"""
-          def tryDownload = new URL(link).#>(new File(path)).!
-          var failed = 0
-          while (failed < 5 && tryDownload != 0) failed += 1
-          if (failed < 5) {
-            log.info(s"downloaded $fileName")
-          } else {
-            throw DownloadFailed(link)
+        if (links.nonEmpty) {
+          log.info(s"starting download ${links.size} files...")
+          links.foreach { link =>
+            val patten = s"""${id}_(.*)_[0-9]{12}\\/(.*).gz\\?""".r
+            val fileName = patten.findFirstMatchIn(link) match {
+              case Some(x) => s"${x.group(1)}_${x.group(2)}.gz"
+              case None => link
+            }
+            log.info(s"downloading $fileName... ")
+            val path = s"""${downloadFolder.getCanonicalPath}/$fileName"""
+            def tryDownload = new URL(link).#>(new File(path)).!
+            var failed = 0
+            while (failed < 5 && tryDownload != 0) failed += 1
+            if (failed < 5) {
+              log.info(s"downloaded $fileName")
+            } else {
+              throw DownloadFailed(link)
+            }
+            totalFailed += failed
+            path
           }
-          totalFailed += failed
-          path
+          writeResult("/finish_report", links, totalFailed, cost(start))
+          reportTo ! InsightsDownloaded(downloadFolder.getAbsolutePath, cost(start), totalFailed)
+          log.info(s"finished download ${links.size} files")
+        } else {
+          log.info("current no data can be downloaded...")
         }
-        writeResult("/finish_report", links, totalFailed, cost(start))
-        reportTo ! InsightsDownloaded(downloadFolder.getAbsolutePath, cost(start), totalFailed)
       } catch {
         case e: DownloadFailed =>
           writeResult("/failed_report", links, totalFailed, cost(start))
           reportTo ! e
-          context.stop(self)
+      } finally {
+        context.stop(self)
       }
+
   }
 
   def cost(start: Long): Long = System.currentTimeMillis() - start
